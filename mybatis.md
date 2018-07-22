@@ -25,13 +25,15 @@ hello world
 创建数据表
 
 ```sql
+CREATE DATABASE IF NOT EXISTS mybatis DEFAULT CHARSET utf8;
+use mybatis;
 CREATE TABLE `tbl_employee` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `last_name` varchar(255) DEFAULT NULL,
   `gender` char(1) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
 创建bean

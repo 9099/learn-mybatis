@@ -7,10 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="HelloWorld" />
+        <module name="Mapper" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.8">
+    <bytecodeTargetLevel target="8">
       <module name="HelloWorld" target="1.8" />
+      <module name="Mapper" target="1.8" />
       <module name="root" target="1.8" />
     </bytecodeTargetLevel>
   </component>
