@@ -398,3 +398,157 @@ public class MybatisTest {
 </configuration>
 ```
 
+#### 增删改
+
+EmployeeMapper.java
+
+```java
+package me.rsnomis.dao;
+
+import me.rsnomis.bean.Employee;
+
+public interface EmployeeMapper {
+
+    Employee getEmpById(Integer id);
+
+    /**
+     * mybatis允许Integer Long Boolean等返回值，返回操作信息，
+     * 直接在函数前修改返回值类型即可
+     * @param employee
+     */
+    Boolean addEmp(Employee employee);
+
+    void updateEmp(Employee employee);
+
+    void deleteEmpById(Integer id);
+}
+```
+
+mybatis允许Integer、Long、Boolean、void等返回值，返回操作信息，直接在函数前修改返回值类型即可
+
+EmployeeMapper.xml
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace写接口的全类名-->
+<mapper namespace="me.rsnomis.dao.EmployeeMapper">
+    <select id="selectEmp" resultType="me.rsnomis.bean.Employee">
+        select id,last_name lastName, email, gender from tbl_employee where id = #{id}
+    </select>
+
+    <select id="getEmpById" resultType="me.rsnomis.bean.Employee">
+        select id,last_name lastName, email, gender from tbl_employee where id = #{id}
+    </select>
+
+    <!--mybatis支持自增主键值的获取，利用statement.getGeneratedKeys()
+    设置useGeneratedKeys为true 使用获取主键值的策略
+    指定对应的主键属性，即获取主键值后封装到对象的什么属性上
+    -->
+    <insert id="addEmp" parameterType="me.rsnomis.bean.Employee"
+        useGeneratedKeys="true" keyProperty="id" databaseId="MySQL">
+        insert into tbl_employee(last_name,email,gender)
+        values(#{lastName}, #{email}, #{gender})
+    </insert>
+
+    <!--Oracle中的插入，主键是从序列中拿到的
+        可以在selectKey标签中先定义查找id的语句
+    -->
+    <insert id="addEmp" parameterType="me.rsnomis.bean.Employee"
+            databaseId="Oracle">
+        <!--keyProperty：属性值封装给那个bean属性
+            order: BEFORE 因为是在插入之前先查询主键值，所以设定执行顺序为之前执行
+                   AFTER 见下面AFTER的语句，即先运行插入，然后插入执行完后再获取id
+            resultType: 说明封装的字段类型
+        -->
+        <selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+            <!--编写主键查询sql语句，是在插入之前运行的-->
+            select EMPLOYEE_SEQ.nextval from dual
+
+            <!--使用after时，先执行了插入语句，可以使用以下语句获取id值
+            mysql也可以使用这种方式，直接select id
+            AFTER的方式在同时插入多条数据的时候可能取到相同值，一般用BEFORE
+            select EMPLOYEE_SEQ.currval from dual
+            -->
+        </selectKey>
+        <!--插入从序列中拿到的id，变量名即keyProperty中定义的-->
+        insert into tbl_employee(EMPLOYEE_ID,LAST_NAME,EMAIL)
+        values(#{id}, #{lastName}, #{email}, #{gender})
+
+        <!--如果order使用AFTER，则先执行如下语句，此时id序列号是直接在插入语句的同时获取的，插入完成后再获取id值
+        insert into tbl_employee(EMPLOYEE_ID,LAST_NAME,EMAIL)
+        values(EMPLOYEE_SEQ.nextval, #{lastName}, #{email}, #{gender})-->
+    </insert>
+    
+    <update id="updateEmp" parameterType="me.rsnomis.bean.Employee">
+        update tbl_employee
+            set last_name=#{lastName}, email=#{email}, gender=#{gender}
+            where id=#{id}
+    </update>
+    
+    <delete id="deleteEmpById" parameterType="me.rsnomis.bean.Employee">
+        delete from tbl_employee where id=#{id}
+    </delete>
+
+</mapper>
+```
+
+mybatis支持自增主键值的获取
+
+对于mysql等支持自增造作的数据库，INSERT操作若不指定主键，则主键值需要在添加之后由数据库生成才能被用户获取，配置步骤：
+
+1. 在mapper文件中设置useGeneratedKeys为true 使用获取主键值的策略
+2. 用keyProperty指定对应的主键属性，即获取主键值后封装到对象的什么属性上
+3. 然后就可以从对象中获取到主键值了
+
+
+
+Oracle不支持自增主键，使用序列模拟自增，每次插入的主键是从序列中获得的
+
+插入数据的过程是：
+
+1. 从Oracle序列表中获取下一个序列值
+2. 再插入数据
+
+配置时，需要现在selectKey中配置序列查询语句，然后再用查到的值设置id
+
+
+
+#### Mybatis参数传递的规则
+
+单个参数：在接口函数中，若只写了一个参数，那么Mybatis不会做特殊处理，参数名可以任意取
+
+​	#{参数名} 参数名随便写，因为只有一个参数
+
+多个参数：在接口函数中，若写了多个参数，会做特殊处理，多个参数会被封装为一个map，#{}则是在map中取值，map的构成是：
+
+key: param1 ... paramN
+
+value: 传入的参数值
+
+可以使用：
+
+​	#{arg0}, #{arg1} ...
+
+​	#{param1}, #{param2}...
+
+​	旧版本可以使用: #{0}, #{1}
+
+可以命名参数：
+
+明确指定封装为map后的key值，方法是在接口中使用@Param("id")参数，这样就可以直接在xml映射文件中使用#{变量名}这样的方式了
+
+```java
+package me.rsnomis.dao;
+
+import me.rsnomis.bean.Employee;
+
+public interface EmployeeMapper {
+
+    Employee getEmpByIdAndLastName(@Param("id")Integer id, @Param("last_name")String last_name);
+    
+}
+```
+

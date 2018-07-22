@@ -1,4 +1,4 @@
-package me.rsnomis.text;
+package me.rsnomis.test;
 
 import me.rsnomis.bean.Employee;
 import me.rsnomis.dao.EmployeeMapper;
@@ -28,7 +28,7 @@ public class MybatisTest {
 
         SqlSession openSession = sqlSessionFactory.openSession();
 
-        Employee e = (Employee)openSession.selectOne("me.snomis.helloworld.dao.EmployeeMapper.selectEmp", 1);
+        Employee e = (Employee)openSession.selectOne("me.rsnomis.dao.EmployeeMapper.selectEmp", 1);
         System.out.println(e);
         openSession.close();
     }

@@ -1,6 +1,6 @@
 package me.rsnomis;
 
-import me.snomis.helloworld.test.MybatisTest;
+import me.rsnomis.test.MybatisTest;
 import org.junit.Before;
 import org.junit.Test;
 
