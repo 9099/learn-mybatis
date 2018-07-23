@@ -1,6 +1,10 @@
 package me.rsnomis.dao;
 
 import me.rsnomis.bean.Employee;
+import org.apache.ibatis.annotations.MapKey;
+
+import java.util.List;
+import java.util.Map;
 
 public interface EmployeeMapper {
 
@@ -17,4 +21,15 @@ public interface EmployeeMapper {
     void updateEmp(Employee employee);
 
     void deleteEmpById(Integer id);
+
+    Employee getEmpByMap(Map map);
+
+    void insertEmpByPojo(Employee e);
+
+    List<Employee> getEmpByLastName(String lastName);
+
+    Map<String, Object> getEmpByIdReturnMap(Integer id);
+
+    @MapKey("id")
+    Map<Integer, Employee> getEmpByLastNameReturnMap(String lastName);
 }

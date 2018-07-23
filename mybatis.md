@@ -308,6 +308,10 @@ public class MybatisTest {
     -->
     <settings>
         <setting name="logImpl" value="STDOUT_LOGGING" />
+        <!-- 延迟加载 -->
+        <setting name="lazyLoadingEnabled" value="true" />
+        <!-- true：所有延迟属性同时加载，false：所有延迟属性按需要加载-->
+        <setting name="aggressiveLazyLoading" value="false" />
     </settings>
 
     <!-- 别名设置 
@@ -518,11 +522,11 @@ Oracle不支持自增主键，使用序列模拟自增，每次插入的主键�
 
 #### Mybatis参数传递的规则
 
-单个参数：在接口函数中，若只写了一个参数，那么Mybatis不会做特殊处理，参数名可以任意取
+- 单个参数：在接口函数中，若只写了一个参数，那么Mybatis不会做特殊处理，参数名可以任意取
 
-​	#{参数名} 参数名随便写，因为只有一个参数
+		\#{参数名} 参数名随便写，因为只有一个参数
 
-多个参数：在接口函数中，若写了多个参数，会做特殊处理，多个参数会被封装为一个map，#{}则是在map中取值，map的构成是：
+- 多个参数：在接口函数中，若写了多个参数，会做特殊处理，多个参数会被封装为一个map，#{}则是在map中取值，map的构成是：
 
 key: param1 ... paramN
 
@@ -530,11 +534,11 @@ value: 传入的参数值
 
 可以使用：
 
-​	#{arg0}, #{arg1} ...
+​	\#{arg0}, \#{arg1} ...
 
-​	#{param1}, #{param2}...
+​	\#{param1}, \#{param2}...
 
-​	旧版本可以使用: #{0}, #{1}
+​	旧版本可以使用: \#{0}, \#{1}
 
 可以命名参数：
 
@@ -551,4 +555,443 @@ public interface EmployeeMapper {
     
 }
 ```
+
+如果在全局配置文件中配置了useActualParamName那么也可以直接使用参数名(需要jdk1.8之后)
+
+- 如果参数很多，且是业务逻辑的数据模型，可以直接用pojo
+
+		\#{属性名}，取出传入的pojo
+
+- 如果多个参数没pojo封装，可以传入map
+
+		\#{key}，就是取出map中的键名
+
+- 如果有多个参数，经常使用map也不方便，可以封装一个TO(Transfer Object)数据传输对象
+
+#### 取值的案例
+
+```java
+public Employee getEmp(@Param("id")Integer id, String lastName);
+```
+
+取值： 
+
+- id ==> \#{id} 或 #{param1} 或 \#{arg0} 老版本 \#{0}
+- lastName ==> \#{param2}
+
+```java
+public Employee getEmp(Integer id, @Param("e")Employee emp);
+```
+
+取值：
+
+- id==>\#{param1}
+- lastName ==> \#{param2.lastName} 或 \#{e.lastName} 
+
+```java
+public Employee getEmp(List<Integer> ids);
+```
+
+注意如果传入的参数是Collection(List、Set)类型，或者是数组，也会特殊处理，把传入的list或是数组封装在map中，map中的key是collection，如果是List那么key是list，如果是Array那么就是array
+
+取值：
+
+- 取出第一个id的值：\#{list[0]}
+
+#### 参数值的获取#和$的区别
+
+区别是：
+
+- \#号是使用?做sql的占位符，相当于用jdbc的PreparedStatement 的预编译方式
+- ?号则是直接将参数拼接到sql语句上
+
+如：
+
+```sql
+select * from tbl_employee where id=${id} and last_name=#{lastName}
+```
+
+mybatis在处理的时候，会这样处理，先预处理sql语句：
+
+```sql
+## 假设参数id为2
+select * from tbl_employee where id=2 and last_name=？
+```
+
+所以使用$容易被sql注入
+
+使用$的情况下:
+
+- 一般在拼接变量名的时候可以使用
+- 在order by之后
+
+原理是：
+
+PreparedStatement会对SQL进行了预编译，在第一次执行SQL前数据库会进行分析、编译和优化，同时执行计划同样会被缓存起来，它允许数据库做参数化查询。在使用参数化查询的情况下，数据库不会将参数的内容视为SQL执行的一部分，而是作为一个字段的属性值来处理，这样就算参数中包含破环性语句（or ‘1=1’）也不会被执行。 
+
+而order by之后的参数并不是字段属性值，所以只能通过$来把变量当成sql语句的一部分，先组合到sql语句中去
+
+#### Null值的处理
+
+\#{}有更丰富的用法：
+
+规定参数的规则：
+
+javaType、jdbcType、mode(存储过程)、numericScale
+
+resultMap、typeHandler、jdbcTypeName、expression
+
+其中jdbcType通常在某些情况下要设置，在数据为null值的时候有些数据库不能识别mybatis对null的默认值，比如Oracle
+
+mybatis中JdbcType中的OTHER类型表示无效类型，mybatis对所有的null值都映射为原生Jdbc的OTHER类型，这是Oracle不支持的，Mysql能支持
+
+此时可以特别指定jdbcType，用法如下：
+
+```sql
+insert into employees(EMPLOYEE_ID,LAST_NAME,EMAIL) values(#{id}, #{lastName}, #{email, jdbcType=NULL})
+```
+
+也可以在全局配置文件中设置jdbcTypeForNull为NULL
+
+#### resultType的使用
+
+- 若返回的是List等集合，那么resultType中需要写list中对象的全路径
+- 若要返回一个map，key是数据表的列名，value是对应的值，每次查询一条数据返回封装的map那么，resultType填map，map是mybatis内部定义的的别名
+- 如果想返回一个封装多条数据的map，如Map<String, Employee>,那么resultType填写的是map中value的全类名
+
+#### ResultMap的使用
+
+```sql
+## 创建部门表
+CREATE TABLE tbl_dept(
+	id INT(11) PRIMARY KEY AUTO_INCREMENT,
+	dept_name VARCHAR(255)
+)ENGINE=INNODB DEFAULT CHARSET=utf8
+
+ALTER TABLE tbl_employee ADD COLUMN d_id INT(11)
+```
+
+**基本使用**
+
+可以使用resultMap指定表的列名和bean属性名的对应关系
+
+```xml
+	<resultMap id="MyEmp" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="email" property="email" />
+        <result column="gender" property="gender" />
+    </resultMap>
+    <select id="getEmpById" resultMap="MyEmp">
+        select * from tbl_employee where id = #{id}
+    </select>
+```
+
+其中，id特指主键，也可以用result，但是id标签可以对主键进行优化处理
+
+**联合查询**
+
+在进行联合查询的时候，比如在查出人物信息的时候还要查人物的部门，可以在Employee对象中添加一个名为dept的属性，封装Department对象
+
+在resultMap下result的property属性中使用级联属性指明：
+
+```xml
+<resultMap id="EmpAndDept" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="d_id" property="dept.id" />
+        <result column="gender" property="gender" />
+        <result column="dept_name" property="dept.departmentName" />
+    </resultMap>
+    <select id="getEmpAndDept" resultMap="EmpAndDept">
+        select e.id id, e.last_name last_name, e.gender gender, e.d_id d_id, d.id did, d.dept_name dept_name from tbl_employee e,ebl_dept d where e.d_id = d.id and e.id=#{id}
+    </select>
+```
+
+如上代码中用`.`号来级联属性
+
+
+
+除了用级联属性的方式，还可以用association标签
+
+```xml
+<resultMap id="EmpAndDeptDif" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="gender" property="gender" />
+
+        <!--association可以用来指定联合查询的对象
+                property: 级联对象的对象名
+                javaType：级联对象的全类名,不能省略
+            标签内和resultMap一样写，column是列名，property是对象的属性名
+        -->
+        <association property="dept" javaType="me.rsnomis.bean.Department">
+            <id column="d_id" property="id" />
+            <result column="dept_name" property="departmentName" />
+        </association>
+
+    </resultMap>
+    <select id="getEmpAndDeptDif" resultMap="EmpAndDeptDif">
+        select e.id id, e.last_name last_name, e.gender gender, e.d_id d_id, d.id did, d.dept_name dept_name from tbl_employee e,tbl_dept d where e.d_id = d.id and e.id=#{id}
+    </select>
+```
+
+association可以用来指定联合查询的对象
+
+- property: 级联对象的对象名
+- javaType：级联对象的全类名,不能省略
+- 标签内和resultMap一样写，column是列名，property是对象的属性名
+
+**分步查询**
+
+现在有一个DepartmentMapper和一个EmployeeMapperPlus，分别有两个查询
+
+```sql
+select * from tbl_employee where id = 1
+select * from tbl_dept where id = 1
+```
+
+现在要执行以下两个步骤：
+
+1. 根据员工id查询Employee信息，获得部门id
+2. 用DepartmentMapper的getDeptById查得部门信息
+3. 把查出的部门信息，设置到employee的对象的dept属性中
+
+此时也可以用association标签，要用到两个属性：
+
+1. select：值就是调用的查询方法写法是方法的： 类名+方法名
+2. column: 前一个查询结果中要传入的列名
+
+```xml
+<!--分步查询：分步执行以下步骤
+        1. 根据员工id查询Employee信息，获得部门id
+        2. 用DepartmentMapper的getDeptById查得部门信息
+        3. 把查出的部门信息，设置到employee的对象的dept属性中
+    -->
+    <resultMap id="EmpAndDeptStep" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email" />
+        <result column="gender" property="gender"/>
+        <!--用association定义employee对象中部门属性dept的关联对象的封装规则
+            现在dept的数据是要根据部门id查处来的，部门id值是前一个查询查出来的
+            select：值就是调用的查询方法写法是方法的： 类名+方法名
+            column: 前一个查询结果中要传入的列名
+        -->
+        <association property="dept"
+                     select="me.rsnomis.dao.DepartmentMapper.getDeptById"
+                     column="d_id">
+        </association>
+    </resultMap>
+    <select id="getEmpByIdStep" resultMap="EmpAndDeptStep">
+        select * from tbl_employee where id=#{id}
+    </select>
+```
+
+**延迟查询**
+
+分步查询中先查Employee再查dept，但是目前为止在每次查询Employee对象的时候，都同时查了部门。延迟加载可以实现先查员工，部门等要用的时候再查询，这样就节约的数据库的开销
+配置延迟查询只需在分步查询的基础上做以下配置：
+        1. 在全局配置文件中的setting中设置lazyLoadingEnabled为true
+        2. 在全局配置文件中的setting中设置aggressiveLazyLoading为false
+
+#### 一对多的查询
+
+之前讲的是关联一个对象，一对一，如果在部门的对象中添加员工列表的属性，表示这个部门的所有员工，要查询属于这个部门的所有员工，就一个部门对多个员工的问题
+
+此时可以在resultMap中使用collection标签，封装所有的Employee对象
+
+属性有两个：
+
+1. property: 指定集合属性的属性名
+2. ofType: 指定集合内部对象的类型
+
+```xml
+<!--要查询一个部门的所有员工，一对多的关系
+        在部门对象中，用集合存储所有的员工
+        这里用collection定义集合：
+        1. property: 指定集合属性的属性名
+        2. ofType: 指定集合内部对象的类型
+    -->
+    <resultMap id="MyDept" type="me.rsnomis.bean.Department">
+        <id column="did" property="id"/>
+        <result column="dept_name" property="departmentName"/>
+        <collection property="emps" ofType="me.rsnomis.bean.Employee">
+            <id column="eid" property="id"/>
+            <result column="last_name" property="lastName"/>
+            <result column="email" property="email"/>
+            <result column="gender" property="gender"/>
+        </collection>
+    </resultMap>
+    <select id="getDeptByIdPlus" resultMap="MyDept">
+        select d.id did, d.dept_name dept_name,
+                e.id eid, e.last_name last_name, e.email email, e.gender gender
+        from tbl_dept d left join tbl_employee e
+        on d.id = e.d_id
+        where d.id = #{id}
+    </select>
+```
+
+**一对多的情况下用分步查询**
+
+分步查询也分两步，先查部门信息，再查员工信息
+
+```
+select * from tbl_dept where id = 1
+select * from tbl_employee where d_id = 1
+```
+
+collection的分步查询使用方法和association类似，同样也支持延迟加载
+
+```xml
+<!--分步查询，collection也有分步查询
+        同样设置两个属性
+        1. select：定义的EmployeeMapperPlus中的getEmpByDeptId方法
+        2. column：传入的参数在之前查询的列名
+        3. fetchType: 设置默认采用延迟加载，这个属性在association中也有，设置成eager就取消了延迟加载，覆盖全局配置中的设置
+        这也支持延迟加载
+    -->
+    <resultMap id="MyDeptStep" type="me.rsnomis.bean.Department">
+        <id column="id" property="id"/>
+        <result column="dept_name" property="departmentName"/>
+        <collection property="emps"
+                    select="me.rsnomis.dao.EmployeeMapperPlus.getEmpByDeptId"
+                    column="id"
+                    fetchType="lazy">
+        </collection>
+    </resultMap>
+    <select id="getDeptByIdStep" resultMap="MyDeptStep">
+        select id, dept_name from tbl_dept where id = #{id}
+    </select>
+```
+
+如果分步查询要传入多个column变量，可以将多列数据封装为map传递
+
+column样例如下：
+
+```
+column="{key1=column1,key2=column2}"
+```
+
+本例中：
+
+```
+column="{deptId = id}"
+```
+
+因为在me.rsnomis.dao.EmployeeMapperPlus.getEmpByDeptId的map映射文件中使用了的是
+
+```
+select * from tbl_employee where d_id = #{deptId}
+
+```
+
+所以key是deptId或者arg[0]或者param[1]
+
+**鉴别器**
+
+```xml
+<!--鉴别器：
+        <discriminator javaType=""></discriminator>
+        mybatis可以使用discriminator判断某列的值，然后根据某列的值改变封装行为
+        比如封装Employee：
+            如果查出的是女生：就把部门信息查询出来，否则不查询
+            如果查出的是男生：就把last_name一列的值赋值给email
+    -->
+    <resultMap id="MyEmpDis" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email" />
+        <result column="gender" property="gender"/>
+        <!--column指定要判断的列和类型-->
+        <discriminator javaType="string" column="gender">
+            <!--女生封装规则，需要写封装对象-->
+            <case value="0" resultType="me.rsnomis.bean.Employee">
+                <association property="dept"
+                             select="me.rsnomis.dao.DepartmentMapper.getDeptById"
+                             column="d_id">
+                </association>
+            </case>
+            <!--男生封装规则，需要写封装对象-->
+            <case value="1" resultType="me.rsnomis.bean.Employee">
+                <id column="id" property="id" />
+                <result column="last_name" property="lastName"/>
+                <result column="last_name" property="email" />
+                <result column="gender" property="gender"/>
+            </case>
+        </discriminator>
+    </resultMap>
+    <select id="getEmpByIdDis" resultMap="MyEmpDis">
+        select id, last_name, gender, email, d_id from tbl_employee where id = #{id}
+    </select>
+```
+
+#### 动态sql标签
+
+`if`标签可以根据实际数据进行判断是否添加查询条件，test使用的是ognl表达式
+
+```xml
+<!--if标签
+    -->
+    <select id="getEmpsByConditionIf" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        where
+        <!--使用ognl表达式
+            ognl表达式中特殊字符早转义，可以查iso-8859-1的特殊字符实体
+        -->
+        <if test="id!=null">
+            id = #{id}
+        </if>
+        <if test="lastName!=null and lastName!=''">
+            and last_name like #{lastName}
+        </if>
+        <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+            and email = #{email}
+        </if>
+        <!--ognl会自动转换字符串和数字-->
+        <if test="gender==0 or gender==1">
+            and gender = #{gender}
+        </if>
+    </select>
+```
+
+只用`if`那么`sql`语句中可能会多出来`and`等关键字
+
+解决办法：
+
+1. 在where之后添加1=1
+2. 使用where标签
+
+`where`标签
+
+where标签可以自动去除多余的and，但是只能去除写在前面的and，写在后面的and不能去除
+
+```xml
+<!--where标签
+    -->
+    <select id="getEmpsByConditionWhere" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <where>
+            <!--使用ognl表达式
+                ognl表达式中特殊字符早转义，可以查iso-8859-1的特殊字符实体
+            -->
+            <if test="id!=null">
+                id = #{id}
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                and last_name like #{lastName}
+            </if>
+            <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+                and email = #{email}
+            </if>
+            <!--ognl会自动转换字符串和数字-->
+            <if test="gender==0 or gender==1">
+                and gender = #{gender}
+            </if>
+        </where>
+```
+
+
+
+
 

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace写接口的全类名-->
+<mapper namespace="me.rsnomis.dao.EmployeeMapperPlus">
+
+    <!--自定映射封装规则
+        type: 规则的java全类名
+        id: 引用名
+    -->
+    <resultMap id="MyEmp" type="me.rsnomis.bean.Employee">
+        <!--column表示数据库列名
+        property表示javabean中的属性名
+        id定义主键，用id则mybatis有优化规则
+        result定义普通列，也可用于主键
+        不指定的列会自动封装
+        -->
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="email" property="email" />
+        <result column="gender" property="gender" />
+    </resultMap>
+    <!--resultMap 自定义结果集映射规则-->
+    <select id="getEmpById" resultMap="MyEmp">
+        select * from tbl_employee where id = #{id}
+    </select>
+
+    <!--联合查询的结果用级联属性封装
+        查询人的同时查找部门
+        在employee对象中添加department属性封装department对象
+        在resultMap标签中property可以使用级联属性
+    -->
+    <resultMap id="EmpAndDept" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="d_id" property="dept.id" />
+        <result column="gender" property="gender" />
+        <result column="dept_name" property="dept.departmentName" />
+    </resultMap>
+    <select id="getEmpAndDept" resultMap="EmpAndDept">
+        select e.id id, e.last_name last_name, e.gender gender, e.d_id d_id, d.id did, d.dept_name dept_name from tbl_employee e,tbl_dept d where e.d_id = d.id and e.id=#{id}
+    </select>
+
+    <resultMap id="EmpAndDeptDif" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName" />
+        <result column="gender" property="gender" />
+
+        <!--association可以用来指定联合查询的对象
+                property: 级联对象的对象名
+                javaType：级联对象的全类名,不能省略
+            标签内和resultMap一样写，column是列名，property是对象的属性名
+        -->
+        <association property="dept" javaType="me.rsnomis.bean.Department">
+            <id column="d_id" property="id" />
+            <result column="dept_name" property="departmentName" />
+        </association>
+
+    </resultMap>
+    <select id="getEmpAndDeptDif" resultMap="EmpAndDeptDif">
+        select e.id id, e.last_name last_name, e.gender gender, e.d_id d_id, d.id did, d.dept_name dept_name from tbl_employee e,tbl_dept d where e.d_id = d.id and e.id=#{id}
+    </select>
+
+    <!--分步查询：分步执行以下步骤
+        1. 根据员工id查询Employee信息，获得部门id
+        2. 用DepartmentMapper的getDeptById查得部门信息
+        3. 把查出的部门信息，设置到employee的对象的dept属性中
+    -->
+    <resultMap id="EmpAndDeptStep" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email" />
+        <result column="gender" property="gender"/>
+        <!--用association定义employee对象中部门属性dept的关联对象的封装规则
+            现在dept的数据是要根据部门id查处来的，部门id值是前一个查询查出来的
+            select：值就是调用的查询方法写法是方法的： 类名+方法名
+            column: 前一个查询结果中要传入的列名
+        -->
+        <association property="dept"
+                     select="me.rsnomis.dao.DepartmentMapper.getDeptById"
+                     column="d_id">
+        </association>
+    </resultMap>
+    <select id="getEmpByIdStep" resultMap="EmpAndDeptStep">
+        select * from tbl_employee where id=#{id}
+    </select>
+
+    <!--可以使用延迟加载
+        现在已经可以使用分步查询，先查Employee再查dept
+        但是目前为止在每次查询Employee对象的时候，都同时查了部门
+        延迟加载可以实现先查员工，部门等要用的时候再查询
+        这样就节约的数据库的开销
+        延迟查询只需在分步查询的基础上做以下配置
+        1. 在全局配置文件中的setting中设置lazyLoadingEnabled
+    -->
+    <resultMap id="EmpAndDeptLazy" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email" />
+        <result column="gender" property="gender"/>
+        <association property="dept"
+                     select="me.rsnomis.dao.DepartmentMapper.getDeptById"
+                     column="d_id">
+        </association>
+    </resultMap>
+    <select id="getEmpByIdLazy" resultMap="EmpAndDeptLazy">
+        select * from tbl_employee where id=#{id}
+    </select>
+
+    <!--根据id查部门-->
+    <select id="getEmpByDeptId" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where d_id = #{deptId}
+    </select>
+
+    <!--鉴别器：
+        <discriminator javaType=""></discriminator>
+        mybatis可以使用discriminator判断某列的值，然后根据某列的值改变封装行为
+        比如封装Employee：
+            如果查出的是女生：就把部门信息查询出来，否则不查询
+            如果查出的是男生：就把last_name一列的值赋值给email
+    -->
+    <resultMap id="MyEmpDis" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id" />
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email" />
+        <result column="gender" property="gender"/>
+        <!--column指定要判断的列和类型-->
+        <discriminator javaType="string" column="gender">
+            <!--女生封装规则，需要写封装对象-->
+            <case value="0" resultType="me.rsnomis.bean.Employee">
+                <association property="dept"
+                             select="me.rsnomis.dao.DepartmentMapper.getDeptById"
+                             column="d_id">
+                </association>
+            </case>
+            <!--男生封装规则，需要写封装对象-->
+            <case value="1" resultType="me.rsnomis.bean.Employee">
+                <id column="id" property="id" />
+                <result column="last_name" property="lastName"/>
+                <result column="last_name" property="email" />
+                <result column="gender" property="gender"/>
+            </case>
+        </discriminator>
+    </resultMap>
+    <select id="getEmpByIdDis" resultMap="MyEmpDis">
+        select id, last_name, gender, email, d_id from tbl_employee where id = #{id}
+    </select>
+
+</mapper>

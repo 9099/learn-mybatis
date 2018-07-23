@@ -12,8 +12,35 @@
         select id,last_name lastName, email, gender from tbl_employee where id = #{id}
     </select>
 
+    <!--多个参数-->
     <select id="getEmpByIdAndLastName" resultType="me.rsnomis.bean.Employee">
         select id,last_name lastName, email, gender from tbl_employee where id = #{param1} and last_name=#{param2}
+    </select>
+
+    <!--传入map-->
+    <select id="getEmpByMap" resultType="me.rsnomis.bean.Employee">
+        select id,last_name lastName, email, gender from tbl_employee where id = #{id} and last_name=#{lastName}
+    </select>
+
+    <!--返回list对象
+        返回类型为集合，那么resultType要写集合中元素的类型
+    -->
+    <select id="getEmpByLastName" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where last_name like #{lastName}
+    </select>
+
+    <!--返回一个map,封装单条记录
+        返回类型直接写map，因为mybatis已经内部取了别名
+    -->
+    <select id="getEmpByIdReturnMap" resultType="map">
+        select * from tbl_employee where id = #{id}
+    </select>
+
+    <!--返回一个map，封装多条记录
+        返回类型直接写map，因为mybatis已经内部取了别名
+    -->
+    <select id="getEmpByLastNameReturnMap" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where last_name like #{lastName}
     </select>
 
     <!--mybatis支持自增主键值的获取，利用statement.getGeneratedKeys()
@@ -54,7 +81,13 @@
         insert into tbl_employee(EMPLOYEE_ID,LAST_NAME,EMAIL)
         values(EMPLOYEE_SEQ.nextval, #{lastName}, #{email}, #{gender})-->
     </insert>
-    
+
+    <!--传入参数为map-->
+    <insert id="insertEmpByPojo" parameterType="me.rsnomis.bean.Employee">
+        insert into tbl_employee(last_name,email,gender)
+        values(#{lastName}, #{email}, #{gender})
+    </insert>
+
     <update id="updateEmp" parameterType="me.rsnomis.bean.Employee">
         update tbl_employee
             set last_name=#{lastName}, email=#{email}, gender=#{gender}

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace写接口的全类名-->
+<mapper namespace="me.rsnomis.dao.EmployeeMapper">
+    <!--if标签
+    -->
+    <select id="getEmpsByConditionIf" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        where
+        <!--使用ognl表达式
+            ognl表达式中特殊字符早转义，可以查iso-8859-1的特殊字符实体
+        -->
+        <if test="id!=null">
+            id = #{id}
+        </if>
+        <if test="lastName!=null and lastName!=''">
+            and last_name like #{lastName}
+        </if>
+        <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+            and email = #{email}
+        </if>
+        <!--ognl会自动转换字符串和数字-->
+        <if test="gender==0 or gender==1">
+            and gender = #{gender}
+        </if>
+    </select>
+
+    <!--if标签
+    -->
+    <select id="getEmpsByConditionWhere" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <where>
+            <!--使用ognl表达式
+                ognl表达式中特殊字符早转义，可以查iso-8859-1的特殊字符实体
+            -->
+            <if test="id!=null">
+                id = #{id}
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                and last_name like #{lastName}
+            </if>
+            <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+                and email = #{email}
+            </if>
+            <!--ognl会自动转换字符串和数字-->
+            <if test="gender==0 or gender==1">
+                and gender = #{gender}
+            </if>
+        </where>
+    </select>
+
+</mapper>

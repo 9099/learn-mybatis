@@ -54,5 +54,34 @@ public class MyTest {
     public void testselectByIdAndLastName() {
         mybatisTest.testSelectByIdAndLastName(1,"Marry");
     }
+
+    @Test
+    public void testSelectEmpByMap() {
+        mybatisTest.testSelectEmpByMap(1, "Tom");
+    }
+
+    @Test
+    public void testInsertEmpByPojo() {
+        Employee e = new Employee();
+        e.setEmail("Marry@163.com");
+        e.setGender("1");
+        e.setLastName("Marry");
+        mybatisTest.testInsertEmpByPojo(e);
+    }
+
+    @Test
+    public void testgetEmpByLastName() {
+        mybatisTest.testSelectEmpByLastName("%");
+    }
+
+    @Test
+    public void testSelectEmpByIdReturnMap() {
+        mybatisTest.testSelectEmpByIdReturnMap(1);
+    }
+
+    @Test
+    public void testSelectEmpByLastNameReturnMap() {
+        mybatisTest.testSelectEmpByLastNameReturnMap("%");
+    }
 }
 
