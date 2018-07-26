@@ -50,4 +50,192 @@
         </where>
     </select>
 
+    <!--trim语句测试
+        where不能解决句末的and，trim可以
+        1. prefix: 前缀,trim标签体中整个字符串拼串后的结果，在结果中加一个前缀
+        2. prefixOverrides: 去掉标签中前面多余的字符
+        3. suffix: 给标签体中拼串的结果加一个后缀
+        4. suffixOverrides: 去掉标签体后多余的后缀
+    -->
+    <select id="getEmpsByConditionTrim" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <trim prefix="where" suffixOverrides="and" prefixOverrides="and">
+            <if test="id!=null">
+                id = #{id} and
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                and last_name like #{lastName} and
+            </if>
+            <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+                and email = #{email} and
+            </if>
+            <!--ognl会自动转换字符串和数字-->
+            <if test="gender==0 or gender==1">
+                and gender = #{gender} and
+            </if>
+        </trim>
+    </select>
+
+    <!--choose标签相当于switch case 分支选择
+        测试如果带了id就用id查，如果带了last_name就用last_name查
+        每次只能进入一个分支
+    -->
+    <select id="getEmpsByConditionChoose" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <where>
+            <choose>
+                <when test="id!=null">
+                    id=#{id}
+                </when>
+                <when test="lastName!=null">
+                    last_name like #{lastName}
+                </when>
+                <when test="email!=null">
+                    email=#{email}
+                </when>
+                <otherwise>
+                    gender = 0
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!--更新数据如果传入对象，那么一般就全都更新，不管是否对象的属性是否有值
+        set可以实现哪一个属性有值就更新哪一个属性
+        如果如下代码不用set标签，直接用set，会导致有的多余逗号不能自动去除
+        使用set标签可以智能去除多余的逗号
+        用trim标签也可以实现set的功能
+    -->
+    <update id="updateEmpByIdSet" >
+        update tbl_employee
+        <set>
+            <if test="lastName!=null">
+                last_name=#{lastName},
+            </if>
+            <if test="gender!=null">
+                last_name=#{gender},
+            </if>
+            <if test="email!=null">
+                last_name=#{email},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--foreach将遍历出的元素赋值给变量
+        1.collection: 指定遍历的集合，list类型的参数会特殊处理封装在map中，map的key就叫list
+        2.item: 将当前遍历出的元素赋值给指定的变量
+        3.separator: 遍历出的元素的分割符
+        4.open: 拼接开始的字符
+        5.close: 拼接结束的字符
+        6.index: 遍历list时 index是索引，item是值
+                 遍历map时 index是key， item是值
+        #{变量名} 就能取出变量的值也就是当前遍历出的元素
+
+        collection的取值：
+            1.若传入的是list: 可以直接写list
+            2.若传入的是array: 可以直接写array
+            3.传入对象，对象中有list: 可以直接写oredCriteria，mybatis会找到非集合对象中的集合对象
+    -->
+    <select id="getEmpsByConditionForeach" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where id in
+        <foreach collection="ids" item="item_id" separator="," open="(" close=")">
+            #{item_id}
+        </foreach>
+
+    </select>
+
+    <!--批量添加参数
+        也可以发多条sql的方式,
+        如果要同时发多条语句用分号隔开那么需要在jdbc连接的时候添加allowMultiQueries=true属性
+    -->
+    <insert id="addEmps" >
+        insert into tbl_employee(last_name, email, gender, d_id) values
+        <foreach collection="emps" item="emp" separator=",">
+            (#{emp.lastName}, #{emp.email}, #{emp.gender}, #{emp.dept.id})
+        </foreach>
+    </insert>
+
+    <!--Oracle需要批量保存时
+        Oracle不支持values ()()()的格式
+        Oracle支持的第一种方式是多个insert语句放在begin和end之间
+        Oracle支持的第二种方式是利用中间表
+        下面语句用foreach改写即可
+    -->
+    <insert id="addEmps" databaseId="Oracle">
+        <!-- 第一种方式
+        begin
+        insert into tbl_employee(last_name, email, gender) values (employees_seq.nextval,"test01","test01@163.com","0");
+        insert into tbl_employee(last_name, email, gender) values (employees_seq.nextval,"test02","test02@163.com","0");
+        end
+        -->
+
+        <!--第二种方式
+        第一行表示插入到employee表
+        第二行是从一个中间表中取值，接下来定义中间表
+        中间表是直接从虚拟的表dual中取值，再组合到一起，取得的值应该要取个别名才能被第二行获取
+        insert into employees(employee_id,last_name,email)
+              select employees_seq.nextval,lastName,email from (
+                       select 'test01' lastName ,'test01@163.com' email from dual
+                       union
+                       select 'test02' lastName ,'test02@163.com' email from dual
+                       union
+                       select 'test02' lastName ,'test02@163.com' email from dual)
+
+        -->
+    </insert>
+
+    <!--内置参数
+        不只是方法传递过来的参数可以被用来判断和取值，
+        mybatis还有两个内置参数
+        _parameter: 代表整个参数
+            传入单个参数，那么_parameter就是这个参数
+            传入多个参数，参数会被封装为一个map，_parameter就是这个map
+        _databaseId: 如果配置了DatabaseIdProvider标签，那么_databaseId就是当前数据库的别名
+
+        如果传入单个基本类型，则if标签一定要用_parameter做判断
+        传入的是对象，if标签做判断用对象的属性名
+        若传入多个对象，则需要使用_parameter.get("0")获取到对象
+
+    -->
+    <select id="getEmpsInnerPatameter" resultType="me.rsnomis.bean.Employee">
+        <!--select * from tbl_employee where id=#{_parameter.id}-->
+        <if test="_databaseId=='mysql'">
+            select * from tbl_employee
+            <if test="_parameter!=null">
+                where id=#{_parameter.id}
+            </if>
+        </if>
+        <if test="_databaseId=='Oracle'">
+            select * from employees
+        </if>
+    </select>
+
+    <!--bind标签
+        模糊查询的时候如果参数中写
+        select * from tbl_employee where last_name like "%#{lastName}%"
+        这样是不行的，因为参数没加进去的时候已经编译好sql语句了
+        如果这样写可以，但是容易引起注入
+        select * from tbl_employee where last_name like "%${lastName}%"
+        这时候可以使用bind标签
+    -->
+    <select id="getEmpsByNameBind" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <bind name="_lastName" value="'%'+name+'%'"/>
+            where last_name like #{_lastName}
+    </select>
+
+    <!--sql标签用于抽取可重用的sql拍那段方便引用
+        用include引用即可
+        在include标签中还可以用property自定义变量
+    -->
+    <sql id="empId">
+        id = #{id}
+    </sql>
+    <select id="getEmpByIdSQL" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where
+        <include refid="empId">
+            <property name="idname" value="idvalue"></property>
+        </include>
+    </select>
 </mapper>

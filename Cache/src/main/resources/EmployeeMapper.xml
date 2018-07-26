@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace写接口的全类名-->
+<mapper namespace="me.rsnomis.dao.EmployeeMapper">
+    <!--启用二级缓存
+        1.eviction: 回收策略，回收什么缓存
+        - LRU - 最近最少使用的，移除最长时间不被使用的对象
+        - FIFO - 先进先出，按对象进入缓存的顺序来移除
+        - SOFT - 软引用，移除基于垃圾回收器状态和软引用规则的对象
+        - WEAK - 弱引用，更积极的移除基于垃圾收集器状态和弱引用规则的对像
+        - 默认的是LRU
+
+        2.flushInterval: 缓存刷新间隔，多长时间缓存清空一次，默认不清空，可以设置一个毫秒值
+        3.readOnly: 是否只读，只读返回数据引用，非只读返回数据副本
+        4.size: 表示缓存中存储多少数据个数
+        5.type: 用于自定义缓存，写自定义缓存的全类名，实现cache接口就行
+    -->
+    <cache eviction="FIFO" flushInterval="6000" readOnly="true" size="1024"></cache>
+    <!--查询员工-->
+    <select id="getEmpById" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where id=#{id}
+    </select>
+
+    <!--增加员工记录-->
+    <insert id="addEmp">
+        insert into tbl_employee (last_name, gender, email) values (#{lastName}, #{gender}, #{email})
+    </insert>
+
+    <!--在标签上添加useCache-->
+    <select id="getEmpUseCache" resultType="me.rsnomis.bean.Employee" useCache="true">
+        select * from tbl_employee where id = #{id}
+    </select>
+
+</mapper>

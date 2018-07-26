@@ -11,6 +11,10 @@
         <module>../HelloWorld</module>
         <module>../Mapper</module>
         <module>../DynamicSQL</module>
+        <module>../Cache</module>
+        <module>../Ehcache</module>
+        <module>../MybatisSSM</module>
+        <module>../MybatisSMM</module>
     </modules>
     <packaging>pom</packaging>
 

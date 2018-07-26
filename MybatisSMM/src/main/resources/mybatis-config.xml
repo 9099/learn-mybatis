@@ -21,6 +21,7 @@
     </environments>
     <mappers>
         <mapper resource="EmployeeMapper.xml"/>
+        <mapper resource="EmployeeMapperPlus.xml"/>
         <mapper resource="DepartmentMapper.xml"/>
     </mappers>
 </configuration>

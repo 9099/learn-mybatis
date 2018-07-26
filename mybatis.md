@@ -991,7 +991,326 @@ where标签可以自动去除多余的and，但是只能去除写在前面的and
         </where>
 ```
 
+trim标签可以智能的去除前后多余的关键字
+
+```xml
+<!--trim语句测试
+        where不能解决句末的and，trim可以
+        1. prefix: 前缀,trim标签体中整个字符串拼串后的结果，在结果中加一个前缀
+        2. prefixOverrides: 去掉标签中前面多余的字符
+        3. suffix: 给标签体中拼串的结果加一个后缀
+        4. suffixOverrides: 去掉标签体后多余的后缀
+    -->
+    <select id="getEmpsByConditionTrim" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <trim prefix="where" suffixOverrides="and" prefixOverrides="and">
+            <if test="id!=null">
+                id = #{id} and
+            </if>
+            <if test="lastName!=null and lastName!=''">
+                and last_name like #{lastName} and
+            </if>
+            <if test="email!=null &amp;&amp; email.trim()!=&quot;&quot;">
+                and email = #{email} and
+            </if>
+            <!--ognl会自动转换字符串和数字-->
+            <if test="gender==0 or gender==1">
+                and gender = #{gender} and
+            </if>
+        </trim>
+    </select>
+```
+
+choose
+
+```xml
+<!--choose标签相当于switch case 分支选择
+        测试如果带了id就用id查，如果带了last_name就用last_name查
+        每次只能进入一个分支
+    -->
+    <select id="getEmpsByConditionChoose" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <where>
+            <choose>
+                <when test="id!=null">
+                    id=#{id}
+                </when>
+                <when test="lastName!=null">
+                    last_name like #{lastName}
+                </when>
+                <when test="email!=null">
+                    email=#{email}
+                </when>
+                <otherwise>
+                    gender = 0
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+```
+
+set
+
+```xml
+<!--更新数据如果传入对象，那么一般就全都更新，不管是否对象的属性是否有值
+        set可以实现哪一个属性有值就更新哪一个属性
+        如果如下代码不用set标签，直接用set，会导致有的多余逗号不能自动去除
+        使用set标签可以智能去除多余的逗号
+        用trim标签也可以实现set的功能
+    -->
+    <update id="updateEmpByIdSet" >
+        update tbl_employee
+        <set>
+            <if test="lastName!=null">
+                last_name=#{lastName},
+            </if>
+            <if test="gender!=null">
+                last_name=#{gender},
+            </if>
+            <if test="email!=null">
+                last_name=#{email},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+```
+
+foreach
+
+```xml
+<!--foreach将遍历出的元素赋值给变量
+        1.collection: 指定遍历的集合，list类型的参数会特殊处理封装在map中，map的key就叫list
+        2.item: 将当前遍历出的元素赋值给指定的变量
+        3.separator: 遍历出的元素的分割符
+        4.open: 拼接开始的字符
+        5.close: 拼接结束的字符
+        6.index: 遍历list时 index是索引，item是值
+                 遍历map时 index是key， item是值
+        #{变量名} 就能取出变量的值也就是当前遍历出的元素
+
+        collection的取值：
+                    1.若传入的是list: 可以直接写list
+                    2.若传入的是array: 可以直接写array
+                    3.传入对象，对象中有list: 可以直接写oredCriteria，mybatis会找到非集合对象中的集合对象
+    -->
+    <select id="getEmpsByConditionForeach" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where id in
+        <foreach collection="ids" item="item_id" separator="," open="(" close=")">
+            #{item_id}
+        </foreach>
+
+    </select>
+```
+
+批量保存
+
+```xml
+<!--批量添加参数-->
+    <insert id="addEmps" >
+        insert into tbl_employee(last_name, email, gender, d_id) values
+        <foreach collection="emps" item="emp" separator=",">
+            (#{emp.lastName}, #{emp.email}, #{emp.gender}, #{emp.dept.id})
+        </foreach>
+    </insert>
+```
+
+内置参数
+
+```xml
+<!--内置参数
+        不只是方法传递过来的参数可以被用来判断和取值，
+        mybatis还有两个内置参数
+        _parameter: 代表整个参数
+            传入单个参数，那么_parameter就是这个参数
+            传入多个参数，参数会被封装为一个map，_parameter就是这个map
+        _databaseId: 如果配置了DatabaseIdProvider标签，那么_databaseId就是当前数据库的别名
+
+        如果传入单个基本类型，则if标签一定要用_parameter做判断
+        传入的是对象，if标签做判断用对象的属性名
+        若传入多个对象，则需要使用_parameter.get("0")获取到对象
+
+    -->
+    <select id="getEmpsInnerPatameter" resultType="me.rsnomis.bean.Employee">
+        <!--select * from tbl_employee where id=#{_parameter.id}-->
+        <if test="_databaseId=='mysql'">
+            select * from tbl_employee
+            <if test="_parameter!=null">
+                where id=#{_parameter.id}
+            </if>
+        </if>
+        <if test="_databaseId=='Oracle'">
+            select * from employees
+        </if>
+    </select>
+```
+
+bind
+
+```xml
+<!--bind标签
+        模糊查询的时候如果参数中写
+        select * from tbl_employee where last_name like "%#{lastName}%"
+        这样是不行的，因为参数没加进去的时候已经编译好sql语句了
+        如果这样写可以，但是容易引起注入
+        select * from tbl_employee where last_name like "%${lastName}%"
+        这时候可以使用bind标签
+    -->
+    <select id="getEmpsByNameBind" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+        <bind name="_lastName" value="'%'+name+'%'"/>
+            where last_name like #{_lastName}
+    </select>
+```
+
+sql
+
+```xml
+<!--sql标签用于抽取可重用的sql拍那段方便引用
+        用include引用即可
+        在include标签中还可以用property自定义变量
+    -->
+    <sql id="empId">
+        id = #{id}
+    </sql>
+    <select id="getEmpByIdSQL" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where
+        <include refid="empId">
+            <property name="idname" value="idvalue"></property>
+        </include>
+    </select>
+```
+
+#### 缓存机制
+
+Mybatis包含一个非常强大的查询缓存特性，可以非常方便的配置和定制。缓存可以极大的提升查询效率。
+
+- mybatis系统中默认定义了两级缓存
+- 一级缓存和二级缓存
+  1. 默认情况下，只有一级缓存(SqlSession级别的缓存，也称为本地缓存)开启
+  2. 二级缓存需要手动开启和配置，是基于namespace级别的缓存
+  3. 为了提高扩展性，Mybatis定义了缓存接口Cache，我们可以通过实现Cache接口来自定义二级缓存
+
+很多固定不变的数据可以缓存，这样就不用多次查询数据库，提升系统性能，比如菜单数据等
+
+**一级缓存**
+
+一级缓存是本地缓存，数据库同一次会话期间查询到的数据会放在本地缓存中，以后若要获取相同的数据，直接从缓存中获取，不用查数据库。
+
+在sqlSession关闭前，查询会被缓存，在第二次执行相同的查询的时候，会直接从缓存中读取数据。所以每个sqlSession都有自己的一级缓存，不同的sqlSession之间不能共享，关闭sqlSession，缓存也销毁。
+
+一级缓存是一直开启的，不能关闭。
+
+一级缓存失效的情况：
+
+- sqlSession不同
+- sqlSession相同时，查询条件不同
+- 相同的sqlSession，相同的查询条件，但是在两次查询之间有增删改操作（不论sqlSession是否commit）
+- 相同的sqlSession，相同的查询条件，但是手动清空了一级缓存
+
+SqlSession级别的一级缓存其实是一个map，每次查询，通过一个map保存数据
 
 
 
+
+
+**二级缓存**
+
+二级缓存是全局缓存，一级缓存作用范围小，比如不变的网站目录等信息，如果session关闭，缓存就没了，这样性能也不好，所以可以使用二级缓存，二级缓存是基于namespace级别的，每个namespace对应一个二级缓存
+
+工作机制：
+
+1. 一个会话，查询一条数据，这个数据就放在会话的一级缓存中
+2. 如果当前会话关闭了，一级缓存失效，但是一级缓存中的数据并没有清空，而是保存到了二级缓存中，查询相同的信息就可以从二级缓存中查找
+3. SqlSession通过EmployeeMapper查得Employee，又通过DepartmentMapper查得Department，此时两个查询结果被放在两个不同的二级缓存中，因为namespace不同，不同namespace的二级缓存数据不共享
+
+注意：缓存是先存在一级缓存中的，只有session关闭后才会进入二级缓存，session如果不关闭，数据就不会进入二级缓存
+
+使用步骤：
+
+1. 开启二级缓存的配置：在全局配置文件中的setting中开启cacheEnabled
+2. 取mapper.xml中配置使用二级缓存：在mapper标签下添加`<cache></cache>`标签
+3. POJO需要实现序列化接口，因为返回数据可能用到序列化和反序列化
+
+cache标签的属性：
+
+- eviction缓存的回收策略：
+  - LRU - 最近最少使用的，移除最长时间不被使用的对象
+  - FIFO - 先进先出，按对象进入缓存的顺序来移除
+  - SOFT - 软引用，移除基于垃圾回收器状态和软引用规则的对象
+  - WEAK - 弱引用，更积极的移除基于垃圾收集器状态和弱引用规则的对像
+  - 默认的是LRU
+- flushInterval缓存刷新间隔，多长时间缓存清空一次，默认不清空，可以设置一个毫秒值
+- readOnly 是否只读
+  - true - mybatis认为所有从缓存中获取数据的操作都是只读，为了加快获取速度，就直接将缓存中的数据的引用返回
+  - false - mybatis认为操作可能会被更改，会使用序列化和反序列化克隆一份数据
+- size 缓存存放的元素个数
+- type 指定自定义缓存的全类名，实现cache接口即可
+
+```xml
+<!--启用二级缓存
+        1.eviction: 回收策略，回收什么缓存
+        - LRU - 最近最少使用的，移除最长时间不被使用的对象
+        - FIFO - 先进先出，按对象进入缓存的顺序来移除
+        - SOFT - 软引用，移除基于垃圾回收器状态和软引用规则的对象
+        - WEAK - 弱引用，更积极的移除基于垃圾收集器状态和弱引用规则的对像
+        - 默认的是LRU
+
+        2.flushInterval: 缓存刷新间隔，多长时间缓存清空一次，默认不清空，可以设置一个毫秒值
+        3.readOnly: 是否只读，只读返回数据引用，非只读返回数据副本
+        4.size: 表示缓存中存储多少数据个数
+        5.type: 用于自定义缓存，写自定义缓存的全类名，实现cache接口就行
+    -->
+    <cache eviction="FIFO" flushInterval="6000" readOnly="true" size="1024"></cache>
+```
+
+**和二级缓存有关的设置和属性**
+
+1. cacheEnabled=true； fasle  关闭的是二级缓存，无法关闭一级缓存
+2. 在select标签上添加useCache属性：fasle是不是用缓存，只能关闭二级缓存
+3. 每个增删改标签上都有一个标签flushCache：默认为true，即每次增删改都会清除一级缓存，同时也会清除二级缓存，在每个select标签中的flushCache属性默认为“false”，默认不清除
+4. sqlSession.clearCache() 方法只清除一级缓存，因为是sqlSession调用的，只作用到这一级
+5. localCacheScope：本地缓存的作用域，只影响一级缓存，在setting 标签中设置，取值可以是`SESSION | STATEMENT` 默认为`SESSION`，表示在session中有一级缓存，`STATEMENT`相当于禁止了session中的一级缓存
+
+#### 缓存原理
+
+- 多个sqlSession同时向数据库中查数据，查得的数据放在对应的sqlSession的一级缓存中
+- 二级缓存以namespace为分隔，基本上就是不同的mapper，每次sqlSession关闭后，就把一级缓存中的数据放到二级缓存中去
+- 新会话进入会先去查找二级缓存中是否有数据，然后查一级缓存，最后查数据库
+- 要想自定义缓存，可以继承cache接口
+
+#### Ehcache缓存
+
+是一个java的快速缓存框架
+
+使用ehcache可以自己实现cache接口自定义，也可以在github上找专门的整合方式，根据说明自行配置
+
+配置清单如下:
+
+1. 在全局配置文件的setting标签下启用缓存
+
+2. 在mapper的xml文件中添加
+
+   ```xml
+   <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+   ```
+
+3. 还可以配置具体参数
+
+   ```xml
+   <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+       <property name="timeToIdleSeconds" value="3600"/><!--1 hour-->
+       <property name="timeToLiveSeconds" value="3600"/><!--1 hour-->
+       <property name="maxEntriesLocalHeap" value="1000"/>
+       <property name="maxEntriesLocalDisk" value="10000000"/>
+       <property name="memoryStoreEvictionPolicy" value="LRU"/>
+     </cache>
+   ```
+
+4. 除了使用`<cache>`标签，还可以使用cache-ref指定和什么namespace使用相同的缓存
+
+   `<cache-ref namespace="me.rsnomis.dao.EmployeeMapper"/>`
+
+也可以在resource目录下添加一个ehcache.xml配置文件做缓存全局配置
+
+#### mybati整合spring
 

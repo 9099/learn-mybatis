@@ -4,5 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--namespace写接口的全类名-->
 <mapper namespace="me.rsnomis.dao.DepartmentMapper">
-
+    <!--ehcache配置需要添加
+    -->
+    <cache-ref namespace="me.rsnomis.dao.EmployeeMapper"/>
 </mapper>

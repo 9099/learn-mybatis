@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Cache/Cache.iml" filepath="$PROJECT_DIR$/Cache/Cache.iml" />
       <module fileurl="file://$PROJECT_DIR$/DynamicSQL/DynamicSQL.iml" filepath="$PROJECT_DIR$/DynamicSQL/DynamicSQL.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Ehcache/Ehcache.iml" filepath="$PROJECT_DIR$/Ehcache/Ehcache.iml" />
       <module fileurl="file://$PROJECT_DIR$/HelloWorld/HelloWorld.iml" filepath="$PROJECT_DIR$/HelloWorld/HelloWorld.iml" />
       <module fileurl="file://$PROJECT_DIR$/Mapper/Mapper.iml" filepath="$PROJECT_DIR$/Mapper/Mapper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MybatisSMM/MybatisSMM.iml" filepath="$PROJECT_DIR$/MybatisSMM/MybatisSMM.iml" />
       <module fileurl="file://$PROJECT_DIR$/root/root.iml" filepath="$PROJECT_DIR$/root/root.iml" />
     </modules>
   </component>

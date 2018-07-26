@@ -6,17 +6,24 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="Cache" />
         <module name="Dynamic" />
         <module name="DynamicSQL" />
+        <module name="Ehcache" />
         <module name="HelloWorld" />
         <module name="Mapper" />
+        <module name="MybatisSMM" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
+      <module name="Cache" target="1.8" />
       <module name="Dynamic" target="1.8" />
       <module name="DynamicSQL" target="1.8" />
+      <module name="Ehcache" target="1.8" />
       <module name="HelloWorld" target="1.8" />
       <module name="Mapper" target="1.8" />
+      <module name="MybatisSMM" target="1.8" />
+      <module name="MybatisSSM" target="1.8" />
       <module name="root" target="1.8" />
     </bytecodeTargetLevel>
   </component>
