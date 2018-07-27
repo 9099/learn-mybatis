@@ -4,28 +4,28 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <!--namespace写接口的全类名-->
 <mapper namespace="me.rsnomis.dao.EmployeeMapper">
-    <select id="selectEmp" resultType="me.rsnomis.bean.Employee">
+    <select id="selectEmp" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select id,last_name lastName, email, gender from tbl_employee where id = #{id}
     </select>
 
-    <select id="getEmpById" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpById" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select id,last_name lastName, email, gender from tbl_employee where id = #{id}
     </select>
 
     <!--多个参数-->
-    <select id="getEmpByIdAndLastName" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpByIdAndLastName" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select id,last_name lastName, email, gender from tbl_employee where id = #{param1} and last_name=#{param2}
     </select>
 
     <!--传入map-->
-    <select id="getEmpByMap" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpByMap" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select id,last_name lastName, email, gender from tbl_employee where id = #{id} and last_name=#{lastName}
     </select>
 
     <!--返回list对象
         返回类型为集合，那么resultType要写集合中元素的类型
     -->
-    <select id="getEmpByLastName" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpByLastName" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee where last_name like #{lastName}
     </select>
 
@@ -39,7 +39,7 @@
     <!--返回一个map，封装多条记录
         返回类型直接写map，因为mybatis已经内部取了别名
     -->
-    <select id="getEmpByLastNameReturnMap" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpByLastNameReturnMap" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee where last_name like #{lastName}
     </select>
 
@@ -47,7 +47,7 @@
     设置useGeneratedKeys为true 使用获取主键值的策略
     指定对应的主键属性，即获取主键值后封装到对象的什么属性上
     -->
-    <insert id="addEmp" parameterType="me.rsnomis.bean.Employee"
+    <insert id="addEmp" parameterType="me.rsnomis.me.rsnomis.bean.Employee"
         useGeneratedKeys="true" keyProperty="id" databaseId="MySQL">
         insert into tbl_employee(last_name,email,gender)
         values(#{lastName}, #{email}, #{gender})
@@ -56,7 +56,7 @@
     <!--Oracle中的插入，主键是从序列中拿到的
         可以在selectKey标签中先定义查找id的语句
     -->
-    <insert id="addEmp" parameterType="me.rsnomis.bean.Employee"
+    <insert id="addEmp" parameterType="me.rsnomis.me.rsnomis.bean.Employee"
             databaseId="Oracle">
         <!--keyProperty：属性值封装给那个bean属性
             order: BEFORE 因为是在插入之前先查询主键值，所以设定执行顺序为之前执行
@@ -83,18 +83,18 @@
     </insert>
 
     <!--传入参数为map-->
-    <insert id="insertEmpByPojo" parameterType="me.rsnomis.bean.Employee">
+    <insert id="insertEmpByPojo" parameterType="me.rsnomis.me.rsnomis.bean.Employee">
         insert into tbl_employee(last_name,email,gender)
         values(#{lastName}, #{email}, #{gender})
     </insert>
 
-    <update id="updateEmp" parameterType="me.rsnomis.bean.Employee">
+    <update id="updateEmp" parameterType="me.rsnomis.me.rsnomis.bean.Employee">
         update tbl_employee
             set last_name=#{lastName}, email=#{email}, gender=#{gender}
             where id=#{id}
     </update>
     
-    <delete id="deleteEmpById" parameterType="me.rsnomis.bean.Employee">
+    <delete id="deleteEmpById" parameterType="me.rsnomis.me.rsnomis.bean.Employee">
         delete from tbl_employee where id=#{id}
     </delete>
 

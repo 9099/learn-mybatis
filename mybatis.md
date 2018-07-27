@@ -1314,3 +1314,19 @@ cache标签的属性：
 
 #### mybati整合spring
 
+用mybatis-spring整合包整合spring和mybatis，让spring管理SqlSessionfactory，可以直接用注入的方式在dao层获取
+
+可以学习一下cargo插件来调试部署web服务
+
+#### mybatis逆向工程
+
+mybatis Generator，可以根据数据库生成映射文件，接口和bean类，就是一个代理生成器
+
+可以到github下在案例代码
+
+可以作为maven插件跑
+
+要注意的是maven配置文件中，即使前面依赖已经添加了jdbc，后面的插件部分还是要重新添加jdbc依赖，否则提示无法加载jdbc驱动
+
+
+

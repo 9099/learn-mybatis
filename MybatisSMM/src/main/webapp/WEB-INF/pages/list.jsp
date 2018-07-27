@@ -4,7 +4,6 @@
 <%@ page isELIgnored="false" %>
 <html>
 <body>
-<h2>Hello World!</h2>
-<a href="emps"> find</a>
+${emp }
 </body>
 </html>

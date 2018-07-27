@@ -19,7 +19,7 @@
     -->
     <cache eviction="FIFO" flushInterval="6000" readOnly="true" size="1024"></cache>
     <!--查询员工-->
-    <select id="getEmpById" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpById" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee where id=#{id}
     </select>
 
@@ -29,7 +29,7 @@
     </insert>
 
     <!--在标签上添加useCache-->
-    <select id="getEmpUseCache" resultType="me.rsnomis.bean.Employee" useCache="true">
+    <select id="getEmpUseCache" resultType="me.rsnomis.me.rsnomis.bean.Employee" useCache="true">
         select * from tbl_employee where id = #{id}
     </select>
 

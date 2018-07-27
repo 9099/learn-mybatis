@@ -6,7 +6,7 @@
 <mapper namespace="me.rsnomis.dao.EmployeeMapper">
     <!--if标签
     -->
-    <select id="getEmpsByConditionIf" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByConditionIf" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee
         where
         <!--使用ognl表达式
@@ -31,7 +31,7 @@
     if标签不能自动去除and
     where标签可以自动去除多余的and，但是只能去除写在前面的and，写在后面的and不能去除
     -->
-    <select id="getEmpsByConditionWhere" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByConditionWhere" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee
         <where>
             <if test="id!=null">
@@ -57,7 +57,7 @@
         3. suffix: 给标签体中拼串的结果加一个后缀
         4. suffixOverrides: 去掉标签体后多余的后缀
     -->
-    <select id="getEmpsByConditionTrim" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByConditionTrim" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee
         <trim prefix="where" suffixOverrides="and" prefixOverrides="and">
             <if test="id!=null">
@@ -80,7 +80,7 @@
         测试如果带了id就用id查，如果带了last_name就用last_name查
         每次只能进入一个分支
     -->
-    <select id="getEmpsByConditionChoose" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByConditionChoose" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee
         <where>
             <choose>
@@ -137,7 +137,7 @@
             2.若传入的是array: 可以直接写array
             3.传入对象，对象中有list: 可以直接写oredCriteria，mybatis会找到非集合对象中的集合对象
     -->
-    <select id="getEmpsByConditionForeach" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByConditionForeach" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee where id in
         <foreach collection="ids" item="item_id" separator="," open="(" close=")">
             #{item_id}
@@ -198,7 +198,7 @@
         若传入多个对象，则需要使用_parameter.get("0")获取到对象
 
     -->
-    <select id="getEmpsInnerPatameter" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsInnerPatameter" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         <!--select * from tbl_employee where id=#{_parameter.id}-->
         <if test="_databaseId=='mysql'">
             select * from tbl_employee
@@ -219,7 +219,7 @@
         select * from tbl_employee where last_name like "%${lastName}%"
         这时候可以使用bind标签
     -->
-    <select id="getEmpsByNameBind" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpsByNameBind" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee
         <bind name="_lastName" value="'%'+name+'%'"/>
             where last_name like #{_lastName}
@@ -232,7 +232,7 @@
     <sql id="empId">
         id = #{id}
     </sql>
-    <select id="getEmpByIdSQL" resultType="me.rsnomis.bean.Employee">
+    <select id="getEmpByIdSQL" resultType="me.rsnomis.me.rsnomis.bean.Employee">
         select * from tbl_employee where
         <include refid="empId">
             <property name="idname" value="idvalue"></property>

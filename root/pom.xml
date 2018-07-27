@@ -13,8 +13,8 @@
         <module>../DynamicSQL</module>
         <module>../Cache</module>
         <module>../Ehcache</module>
-        <module>../MybatisSSM</module>
         <module>../MybatisSMM</module>
+        <module>../Generator</module>
     </modules>
     <packaging>pom</packaging>
 

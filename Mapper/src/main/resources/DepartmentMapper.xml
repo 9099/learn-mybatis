@@ -5,7 +5,7 @@
 <!--namespace写接口的全类名-->
 <mapper namespace="me.rsnomis.dao.DepartmentMapper">
 
-    <select id="getDeptById" resultType="me.rsnomis.bean.Department">
+    <select id="getDeptById" resultType="me.rsnomis.me.rsnomis.bean.Department">
         select id, dept_name departmentName from tbl_dept where id = #{id}
     </select>
 
@@ -15,10 +15,10 @@
         1. property: 指定集合属性的属性名
         2. ofType: 指定集合内部对象的类型
     -->
-    <resultMap id="MyDept" type="me.rsnomis.bean.Department">
+    <resultMap id="MyDept" type="me.rsnomis.me.rsnomis.bean.Department">
         <id column="did" property="id"/>
         <result column="dept_name" property="departmentName"/>
-        <collection property="emps" ofType="me.rsnomis.bean.Employee">
+        <collection property="emps" ofType="me.rsnomis.me.rsnomis.bean.Employee">
             <id column="eid" property="id"/>
             <result column="last_name" property="lastName"/>
             <result column="email" property="email"/>
@@ -40,7 +40,7 @@
         3. fetchType: 设置默认采用延迟加载，设置成eager就取消了延迟加载，覆盖全局配置中的设置
         这也支持延迟加载
     -->
-    <resultMap id="MyDeptStep" type="me.rsnomis.bean.Department">
+    <resultMap id="MyDeptStep" type="me.rsnomis.me.rsnomis.bean.Department">
         <id column="id" property="id"/>
         <result column="dept_name" property="departmentName"/>
         <collection property="emps"

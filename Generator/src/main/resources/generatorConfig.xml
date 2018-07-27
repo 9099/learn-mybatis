@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+    <!--导入包的方式-->
+    <!--<classPathEntry location="/Program Files/IBM/SQLLIB/java/db2java.zip" />-->
+
+    <!--Mybatis3Simple生成简单版的crud-->
+    <context id="DB2Tables" targetRuntime="MyBatis3Simple">
+        <jdbcConnection driverClass="com.mysql.jdbc.Driver"
+                        connectionURL="jdbc:mysql://localhost:3306/mybatis?useSSL=false"
+                        userId="root"
+                        password="root">
+        </jdbcConnection>
+
+        <!--java类型解析器-->
+        <javaTypeResolver >
+            <property name="forceBigDecimals" value="false" />
+        </javaTypeResolver>
+
+        <!--定义java模型的属性，指定javaBean的生成策略
+            1.targetPackage: bean生成的路径
+            2.targetProject: 生成在哪个工程
+        -->
+        <javaModelGenerator targetPackage="me.rsnomis.bean" targetProject=".\src\main\java">
+            <property name="enableSubPackages" value="true" />
+            <property name="trimStrings" value="true" />
+        </javaModelGenerator>
+
+        <!--sql映射生成策略
+            1. targetPackage: 映射文件生成位置
+            2. targetProject: 生成在哪个工程
+        -->
+        <sqlMapGenerator targetPackage="me.rsnomis.dao"  targetProject=".\src\main\java">
+            <property name="enableSubPackages" value="true" />
+        </sqlMapGenerator>
+
+        <!--指定java客户端代码生成器，就是用户怎样使用生成的代码文件，就是mapper的接口文件
+            1. targetPackage: 映射文件生成位置
+            2. targetProject: 生成在哪个工程
+        -->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="me.rsnomis.dao"  targetProject=".\src\main\java">
+            <property name="enableSubPackages" value="true" />
+        </javaClientGenerator>
+
+        <!--用来指定生成数据库中的哪些表,根据表创建javabean
+            1.domainObjectName: 指定表对应的bean名
+        -->
+        <!--
+        <table schema="DB2ADMIN" tableName="ALLTYPES" domainObjectName="Customer" >
+            <property name="useActualColumnNames" value="true"/>
+            <generatedKey column="ID" sqlStatement="DB2" identity="true" />
+            <columnOverride column="DATE_FIELD" property="startDate" />
+            <ignoreColumn column="FRED" />
+            <columnOverride column="LONG_VARCHAR_FIELD" jdbcType="VARCHAR" />
+        </table>
+-->
+        <table tableName="tbl_dept" domainObjectName="Department"></table>
+        <table tableName="tbl_employee" domainObjectName="Employee"></table>
+    </context>
+</generatorConfiguration>

@@ -7,7 +7,6 @@ public class Employee implements Serializable{
     private String lastName;
     private String email;
     private String gender;
-    private Department dept;
 
     @Override
     public String toString() {
@@ -19,23 +18,14 @@ public class Employee implements Serializable{
                 '}';
     }
 
-    public Employee(Integer id, String lastName, String email, String gender, Department dept) {
+    public Employee(Integer id, String lastName, String email, String gender) {
         this.id = id;
         this.lastName = lastName;
         this.email = email;
         this.gender = gender;
-        this.dept = dept;
     }
 
     public Employee() {
-    }
-
-    public Department getDept() {
-        return dept;
-    }
-
-    public void setDept(Department dept) {
-        this.dept = dept;
     }
 
     public Integer getId() {
