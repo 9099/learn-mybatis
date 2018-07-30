@@ -1330,3 +1330,54 @@ mybatis Generator，可以根据数据库生成映射文件，接口和bean类�
 
 
 
+generator使用过程：
+
+1. 在pom.xml中添加依赖
+2. 在resources目录下添加逆向工程配置文件generatorConfig.xml
+3. 以maven插件的方式运行 `-Dmybatis.generator.overwrite=true mybatis-generator:generate`
+
+#### mybatis的运行原理
+
+mybatis中有四大对象
+
+1. Executor
+2. StatementHandler
+3. parameterHandler 
+4. resultHandler 
+
+用于创建处理sql语句的生成和得到的结果，Mybatis在四大对象的创建过程中，都会有插件进行介入。插件可以利用动态代理机制一层层包装目标对象。插件可以利用动态代理机制，一层层的包装目标对象，而实现在目标对象执行目标方法之前进行拦截的效果。
+
+mybatis允许在已映射语句执行过程中的某一点进行拦截调用
+
+默认情况下，Mybatis允许使用插件来拦截的方法调用包括：
+
+- Executor(update, query, flushStatement, commit, rollback, getTransaction, close, isClosed)
+- ParameterHandler(getParameterObject, setParameters)
+- ResultSetHandler(handleResultSets, handleOutputParameters)
+- StatementHandler(prepare, parameterize, batch, update, query)
+
+![](./images/1.png)
+
+![](./images/2.jpg)
+
+mybatis工作的基本流程是：
+
+1. 获取SqlSessionFactory
+2. 获取sqlSession对象
+3. 获取接口的实现类对象，实现类对象是一个(MapperProxy)
+4. 拿到代理对象之后使用代理对象的方法
+
+![](./images/2.png)
+
+第一步根据配置文件创建SqlSessionFactory，创建SqlSessionFactory的过程中，主要是解析配置文件，使用Configuration类封装所有的配置文件的详细信息，返回DefaultSqlSession对象，MappedStatement封装了一个增删改查的详细信息
+
+![](./images/3.png)
+
+第二步返回SqlSession的实现类DefaultSqlSession对象，里面包含了Executor和Configuration
+
+Executor对象就是在openSession的时候被创建的
+
+![](./images/4.png)
+
+第三步：getMapper返回接口的代理对象，包含了sqlSession对象
+

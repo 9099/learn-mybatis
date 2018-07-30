@@ -7,8 +7,12 @@
     <!--导入包的方式-->
     <!--<classPathEntry location="/Program Files/IBM/SQLLIB/java/db2java.zip" />-->
 
-    <!--Mybatis3Simple生成简单版的crud-->
-    <context id="DB2Tables" targetRuntime="MyBatis3Simple">
+    <!--
+        targetRuntime属性值：
+            1.Mybatis3Simple生成简单版的crud
+            2.使用Mybatis3可以生成带参数的查询语句
+    -->
+    <context id="DB2Tables" targetRuntime="MyBatis3">
         <jdbcConnection driverClass="com.mysql.jdbc.Driver"
                         connectionURL="jdbc:mysql://localhost:3306/mybatis?useSSL=false"
                         userId="root"
