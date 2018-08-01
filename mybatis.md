@@ -1381,3 +1381,170 @@ Executor对象就是在openSession的时候被创建的
 
 第三步：getMapper返回接口的代理对象，包含了sqlSession对象
 
+![](./images/5.png)
+
+第四步执行查询，其中创建了四大对象之中的三个
+
+查询流程总结如下
+
+![](./images/6.png)
+
+总结整个过程：
+
+1. 根据配置文件(全局，sql映射)初始化Configuration对象
+
+2. 创建一个DefaultSqlSession对象
+
+   里面包含了Configuration对象以及Executor(根据全局配置文件中的defaultExecutorType)创建对应的Executor
+
+3. DefaultSqlSession.getMapper()，拿到Mapper接口对应的MapperProxy
+
+4. MapperProxy里有DefaultSqlSession
+
+5. 执行增删改查方法：
+
+   调用DefaultSqlSession的增删改查(使用Executor的增删改查方法)
+
+   Executor会创建一个StatementHandler对象，在StatementHandler中会创建ParameterHandler和ResultSetHandler对象
+
+   调用StatementHandler对象预编译参数，使用ParameterHandler对象设置参数
+
+   然后调用StatementHandler的增删改查方法
+
+   使用ResultSetHandler封装结果
+
+四大对象创建的时候都使用了拦截器调用：
+
+interceptorChain.pluginAll()方法
+
+#### 插件
+
+Mybatis在四大对象的创建过程中，都会有插件进行介入。插件可以利用动态代理机制一层层包装目标对象。插件可以利用动态代理机制，一层层的包装目标对象，而实现在目标对象执行目标方法之前进行拦截的效果。
+
+mybatis允许在已映射语句执行过程中的某一点进行拦截调用
+
+默认情况下，Mybatis允许使用插件来拦截的方法调用包括：
+
+- Executor(update, query, flushStatement, commit, rollback, getTransaction, close, isClosed)
+- ParameterHandler(getParameterObject, setParameters)
+- ResultSetHandler(handleResultSets, handleOutputParameters)
+- StatementHandler(prepare, parameterize, batch, update, query)
+
+四大对象创建的时候
+
+1. 每个对象创建出来后不是直接返回的，而是调用interceptorChain.pluginAll(parameterHandler)后再返回
+2. 获取到所有的Interceptor拦截器(插件都要实现这个接口)，调用interceptor.plugin(target)返回包装对象
+
+插件的机制就是使用插件为目标对象创建一个代理对象
+
+编写插件步骤：
+
+1. 编写Interceptor的实现类
+
+2. 使用@Intercepts注解编写插件签名，即指定要拦截什么对象的什么方法
+
+3. 把插件注册到全局配置文件中，用&lt;plugin&gt; 标签填写上插件的全类名
+
+   在注册的时候可以使用properties标签添加属性和值，这个值会在插件的setProperties()方法中被包装传入
+
+插件会在plugin()方法中生成目标对象的包装对象
+
+多个对象拦截同一个目标的想的时候：
+
+插件的执行顺序是：
+
+1. 传入参数按全局配置文件中先配置的先传参
+2. 包装动态代理按全局配置文件中先配置的后包装
+3. 执行顺序按全局配置文件中先配置的后执行
+
+其实代理就是一层一层包装上去的如图
+
+![](./images/7.png)
+
+PageHelper的使用见工程Others
+
+**Mybatis批量操作**
+
+数据库连接的语句长度有限制，使用foreach标签连接数据可能导致数据库操作语句太长。Mybatis中有批量操作工具，在setting标签中有defaultExecutorType标签，默认用的是SIMPLE值，可以使用BATCH创建执行批量操作的EXECUTOR
+
+在全局配置文件中配置批量操作属性，那么所有的sql执行都使用批量执行器，可以在创建SqlSession的时候指定创建的Executor类别
+
+```java
+SqlSession session = sqlSessionFactory.openSession(ExecutorType.BATCH);
+```
+
+批量操作的时候只预编译一次sql语句，然后每添加一个元素就是设置一次参数值，不用再次预编译sql语句，如果用simple的Executor则是添加一个记录就预编译一次语句
+
+在整合Spring的时候，如果需要批量操作，只需要添加一个能批量操作的sqlSession的bean就行了
+
+```xml
+<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"/>
+        <constructor-arg name="executorType" value="BATCH"/>
+    </bean>
+```
+
+然后在service层注入这个bean，然后获取相应的mapper即可
+
+#### 存储过程
+
+实际开发中，我们通常也会写一些存储过程，MyBatis也支持对存储过程的调用，存储过程是很多sql语句的集合，数据库编译一次sql语句保存起来，之后要用直接调用即可
+
+一个最简单的存储过程
+
+```sql
+delimiter $$
+	create procedure test()
+	begin
+		select 'hello';
+	end $$
+	delimiterl
+```
+
+存储过程的调用
+
+1. select标签中statementType="CALLABLE"
+
+2. 标签体中调用语法：
+
+   {call procedure_name(#{param1_info},#{param2_info})}
+
+
+
+Oracle中的分页
+
+```sql
+create or replace procedure
+	hello_test(
+		p_start in int, p_end in int, p_count out int, p_emps out sys_refcursor
+	) as
+begin
+	select count(*) into p_count from employees;
+	open p_emps for 
+		select * from (select rownum rn, e.* from employees e where rownum <= p_end)
+			where rn>= p_start;
+end hello_test;
+```
+
+#### 自定义TypeHandler处理枚举
+
+可以通过自定义TypeHandler的形式来设置参数或者取出结果集的时候自定义参数封装策略
+
+步骤
+
+- 实现TypeHandler接口或者继承BaseTypeHandler
+
+- 使用@MappedTypes定义处理的java类型
+
+  使用@MappedJdbcTypes定义jdbcType类型
+
+- 在自定义结果集标签或者参数处理的时候声明使用自定义TypeHandler进行处理(Mapper文件汇总)
+
+  或者在全局配置TypeHandler要处理的javaType(全局配置文件中)
+
+数据库添加一列
+
+```sql
+ALTER TABLE tbl_employee ADD empStatus VARCHAR(11)
+```
+

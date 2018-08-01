@@ -19,10 +19,10 @@
     </context:component-scan>
 
     <!--视图解析器-->
-    <me.rsnomis.bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/WEB-INF/pages/"></property>
         <property name="suffix" value=".jsp"></property>
-    </me.rsnomis.bean>
+    </bean>
 
     <mvc:annotation-driven />
     <mvc:default-servlet-handler/>

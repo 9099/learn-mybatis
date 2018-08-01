@@ -9,6 +9,8 @@
       <module fileurl="file://$PROJECT_DIR$/HelloWorld/HelloWorld.iml" filepath="$PROJECT_DIR$/HelloWorld/HelloWorld.iml" />
       <module fileurl="file://$PROJECT_DIR$/Mapper/Mapper.iml" filepath="$PROJECT_DIR$/Mapper/Mapper.iml" />
       <module fileurl="file://$PROJECT_DIR$/MybatisSMM/MybatisSMM.iml" filepath="$PROJECT_DIR$/MybatisSMM/MybatisSMM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Others/Others.iml" filepath="$PROJECT_DIR$/Others/Others.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Plugin/Plugin.iml" filepath="$PROJECT_DIR$/Plugin/Plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/root/root.iml" filepath="$PROJECT_DIR$/root/root.iml" />
     </modules>
   </component>

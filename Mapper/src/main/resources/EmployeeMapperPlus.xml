@@ -9,7 +9,7 @@
         type: 规则的java全类名
         id: 引用名
     -->
-    <resultMap id="MyEmp" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="MyEmp" type="me.rsnomis.bean.Employee">
         <!--column表示数据库列名
         property表示javabean中的属性名
         id定义主键，用id则mybatis有优化规则
@@ -31,7 +31,7 @@
         在employee对象中添加department属性封装department对象
         在resultMap标签中property可以使用级联属性
     -->
-    <resultMap id="EmpAndDept" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="EmpAndDept" type="me.rsnomis.bean.Employee">
         <id column="id" property="id" />
         <result column="last_name" property="lastName" />
         <result column="d_id" property="dept.id" />
@@ -42,7 +42,7 @@
         select e.id id, e.last_name last_name, e.gender gender, e.d_id d_id, d.id did, d.dept_name dept_name from tbl_employee e,tbl_dept d where e.d_id = d.id and e.id=#{id}
     </select>
 
-    <resultMap id="EmpAndDeptDif" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="EmpAndDeptDif" type="me.rsnomis.bean.Employee">
         <id column="id" property="id" />
         <result column="last_name" property="lastName" />
         <result column="gender" property="gender" />
@@ -52,7 +52,7 @@
                 javaType：级联对象的全类名,不能省略
             标签内和resultMap一样写，column是列名，property是对象的属性名
         -->
-        <association property="dept" javaType="me.rsnomis.me.rsnomis.bean.Department">
+        <association property="dept" javaType="me.rsnomis.bean.Department">
             <id column="d_id" property="id" />
             <result column="dept_name" property="departmentName" />
         </association>
@@ -67,7 +67,7 @@
         2. 用DepartmentMapper的getDeptById查得部门信息
         3. 把查出的部门信息，设置到employee的对象的dept属性中
     -->
-    <resultMap id="EmpAndDeptStep" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="EmpAndDeptStep" type="me.rsnomis.bean.Employee">
         <id column="id" property="id" />
         <result column="last_name" property="lastName"/>
         <result column="email" property="email" />
@@ -94,7 +94,7 @@
         延迟查询只需在分步查询的基础上做以下配置
         1. 在全局配置文件中的setting中设置lazyLoadingEnabled
     -->
-    <resultMap id="EmpAndDeptLazy" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="EmpAndDeptLazy" type="me.rsnomis.bean.Employee">
         <id column="id" property="id" />
         <result column="last_name" property="lastName"/>
         <result column="email" property="email" />
@@ -109,7 +109,7 @@
     </select>
 
     <!--根据id查部门-->
-    <select id="getEmpByDeptId" resultType="me.rsnomis.me.rsnomis.bean.Employee">
+    <select id="getEmpByDeptId" resultType="me.rsnomis.bean.Employee">
         select * from tbl_employee where d_id = #{deptId}
     </select>
 
@@ -120,7 +120,7 @@
             如果查出的是女生：就把部门信息查询出来，否则不查询
             如果查出的是男生：就把last_name一列的值赋值给email
     -->
-    <resultMap id="MyEmpDis" type="me.rsnomis.me.rsnomis.bean.Employee">
+    <resultMap id="MyEmpDis" type="me.rsnomis.bean.Employee">
         <id column="id" property="id" />
         <result column="last_name" property="lastName"/>
         <result column="email" property="email" />
@@ -128,14 +128,14 @@
         <!--column指定要判断的列和类型-->
         <discriminator javaType="string" column="gender">
             <!--女生封装规则，需要写封装对象-->
-            <case value="0" resultType="me.rsnomis.me.rsnomis.bean.Employee">
+            <case value="0" resultType="me.rsnomis.bean.Employee">
                 <association property="dept"
                              select="me.rsnomis.dao.DepartmentMapper.getDeptById"
                              column="d_id">
                 </association>
             </case>
             <!--男生封装规则，需要写封装对象-->
-            <case value="1" resultType="me.rsnomis.me.rsnomis.bean.Employee">
+            <case value="1" resultType="me.rsnomis.bean.Employee">
                 <id column="id" property="id" />
                 <result column="last_name" property="lastName"/>
                 <result column="last_name" property="email" />

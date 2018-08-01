@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace写接口的全类名-->
+<mapper namespace="me.rsnomis.dao.EmployeeMapper">
+
+    <!--可以在resultMap中指定typeHandler-->
+    <resultMap id="MyEmp" type="me.rsnomis.bean.Employee">
+        <id column="id" property="id"/>
+        <result column="empStatus" property="empStatus" typeHandler="me.rsnomis.handler.MyEnumEmpStatusTypeHandler"/>
+    </resultMap>
+
+    <select id="getEmps" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee
+    </select>
+
+    <select id="getEmpById" resultType="me.rsnomis.bean.Employee">
+        select * from tbl_employee where id = #{id}
+    </select>
+
+    <!--可以在传递参数的时候定义类型处理器-->
+    <insert id="addEmp" parameterType="me.rsnomis.bean.Employee"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into tbl_employee(last_name, email, gender, empStatus)
+        values(#{lastName}, #{email}, #{gender}, #{empStatus,typeHandler=me.rsnomis.handler.MyEnumEmpStatusTypeHandler)
+    </insert>
+
+    <!--使用select调用存储过程
+        使用CALLABLE调用存储过程
+        存储过程有固定格式 {call procedure_name()}
+    -->
+    <select id="getPageByProcedure" statementType="CALLABLE" databaseId="oracle">
+        {call hello_test(
+                #{start,mode=IN,jdbcType=INTEGER}
+                #{end,mode=IN,jdbcType=INTEGER}
+                #{count,mode=OUT,jdbcType=INTEGER}
+                #{emps,mode=OUT,jdbcType=CURSOR,javaType=ResultSet,resultMap=PageEmp}
+        )}
+    </select>
+
+    <resultMap id="PageEmp" type="me.rsnomis.bean.Employee">
+        <id column="EMPLOYEE_ID" property="id"/>
+        <result column="LAST_NAME" property="lastName"/>
+        <result column="EMAIL" property="email"/>
+    </resultMap>
+</mapper>

@@ -14,6 +14,8 @@
         <module name="HelloWorld" />
         <module name="Mapper" />
         <module name="MybatisSMM" />
+        <module name="Others" />
+        <module name="Plugin" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8">
@@ -26,6 +28,8 @@
       <module name="Mapper" target="1.8" />
       <module name="MybatisSMM" target="1.8" />
       <module name="MybatisSSM" target="1.8" />
+      <module name="Others" target="1.8" />
+      <module name="Plugin" target="1.8" />
       <module name="root" target="1.8" />
       <module name="webapp" target="1.7" />
     </bytecodeTargetLevel>
